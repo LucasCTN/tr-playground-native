@@ -816,13 +816,116 @@ check that page contains "Login Successful"
 - To add a scenario, append to `LOGIN_SCENARIOS`; no route registration is
   needed beyond the existing `demos/login-scenarios/[scenario]` screen.
 
+## Grouped demos with tabs
+
+When several web playground pages exercise the same kind of interaction, they
+share one home card instead of one card each. `components/tabbed-demo.tsx`
+renders the header card and a tab bar; the screen file only lists its tabs:
+
+```tsx
+const TABS: readonly DemoTab[] = [
+  { key: 'tap', label: 'Tap', icon: 'hand-left-outline',
+    description: 'Validate button click functionality', Section: TapSection },
+  // ...
+];
+
+export default function GesturesScreen() {
+  return <TabbedDemo id="gestures" title="Gestures" tabs={TABS} />;
+}
+```
+
+- testIDs: `<id>-tab-<key>` for each tab, `<id>-description` for the header text,
+  which changes with the active tab.
+- `?tab=<key>` opens a tab directly, e.g.
+  `trplayground://demos/gestures?tab=long-press`.
+- Only the active section is mounted, so switching tabs resets its state.
+- Keep each section to one screen where possible; that is the point of tabs
+  over one long scroll.
+- When a group absorbs an existing standalone demo, move it into a section
+  with its copy and testIDs unchanged and remove its card from `DEMOS`.
+
+## Example: Gestures Demo
+
+`app/demos/gestures.tsx` maps the web playground's mouse interactions to their
+touch equivalents. Sections live in `components/gestures/`.
+
+| Tab | Ports | Touch mapping |
+|---|---|---|
+| Tap (default) | the former standalone Button Tap demo | unchanged |
+| Long Press | [`/longClick`](https://tr-playground.netlify.app/longClick) | press and hold |
+| Double Tap | [`/rightClick`](https://tr-playground.netlify.app/rightClick) | a phone has no right button; double tap is its secondary gesture |
+| Hover | [`/mouseHover`](https://tr-playground.netlify.app/mouseHover) | real hover (mouse, stylus, tablet trackpad) or a touch |
+
+**Tap** keeps the old demo's copy and testIDs (`tap-button`,
+`tap-success-message`); only the way in changed.
+
+**Long Press** copy matches the web, "click" wording included. Pick the
+threshold in `Select long click duration (seconds):` (1–10, default 1), then
+hold one of three `Click here` buttons; while held it reads
+`Keep holding... 1.23s`. The status under `Click time:` reads
+`Press and hold a button for at least 2 seconds.`, then
+`Button 2: long click! You held for 3.02s.` or
+`Button 1: quick press. You held for 0.12s.`
+
+**Double Tap**: `Double tap here` becomes `The button was double tapped` (and
+turns grey) on two taps within 300 ms. A lone tap shows
+`That was a single tap. Tap twice quickly.` once the 300 ms window closes.
+
+**Hover**: three `Hover here` buttons; `Hidden text:` shows
+`Button 3: This text is now visible!`, otherwise
+`Hover over a button to reveal the text.`
+
+### Predictable content and testIDs
+
+| Element | `testID` |
+|---|---|
+| Tab | `gestures-tab-tap` / `-long-press` / `-double-tap` / `-hover` |
+| Long press threshold / buttons / status | `long-press-duration-picker` / `long-press-button-1`..`3` / `long-press-status` |
+| Double tap button / single-tap hint | `double-tap-button` / `double-tap-single-hint` |
+| Hover buttons / status | `hover-button-1`..`3` / `hover-status` |
+
+### Sample testRigor flow
+
+```
+click "Gestures"
+click "Long Press"
+select "2" from "Select long click duration"
+long press "Click here"
+check that page contains "long click!"
+click "Double Tap"
+double click "Double tap here"
+check that page contains "The button was double tapped"
+```
+
+### Implementation notes
+
+- Deliberate divergences from the web:
+  - Right click becomes double tap, with its own copy (`Double tap here`,
+    `The button was double tapped`).
+  - A finger cannot hover: a touch screen only senses it on contact. Hover
+    exists only for pointers tracked before contact — a stylus sensed above the
+    screen (S Pen, Apple Pencil on recent iPads) or a mouse/trackpad (Android
+    with a mouse, iPad pointer, DeX, ChromeOS). Those hide the text on
+    hover-out, as on the web. A touch reveals it and leaves it shown, the way
+    mobile browsers keep `:hover` after a tap; otherwise the text would vanish
+    before a test could read it. Only the touch path is verified — Maestro
+    cannot generate hover events.
+  - The Hold Key Click page (click while holding Ctrl/Command) has no tab: a phone
+    has no modifier keys, and the closest analogue — holding one finger down
+    while tapping with another — cannot be driven by Maestro or `adb`, so it
+    could not be verified.
+- Long press uses `onPressIn`/`onPressOut` rather than `onLongPress`, so the
+  threshold is the picker's value and not the OS long-press timeout. Sliding the
+  finger off the button ends the press, like the web's `mouseleave`.
+- Double tap is timed in JS on `onPress`, not with a gesture-handler
+  recognizer, so the app needs no `GestureHandlerRootView`.
+
 ## Example: Selection Controls Demo
 
 `app/demos/selection-controls.tsx` groups the single- and multi-choice controls
 behind one home card, with one tab per web playground page it absorbs. Each tab
-is a component in `components/selection-controls/`; only the active one is
-mounted, so switching tabs resets it. Open a tab directly with the `tab` query
-param, e.g. `trplayground://demos/selection-controls?tab=dropdowns`.
+is a component in `components/selection-controls/`, rendered through the shared
+`TabbedDemo` (see [Grouped demos with tabs](#grouped-demos-with-tabs)).
 
 | Tab | Ports | Component |
 |---|---|---|
@@ -859,7 +962,7 @@ menu` → `One`/`Two`/`Three`), `Single list select` and `Multiple list select`
 
 | Element | `testID` |
 |---|---|
-| Tab | `selection-tab-checkbox` / `-radio` / `-dropdowns` / `-advanced` |
+| Tab | `selection-controls-tab-checkbox` / `-radio` / `-dropdowns` / `-advanced` |
 | Header description (changes per tab) | `selection-controls-description` |
 | Checkbox tab | unchanged: `checkbox-option1`..`4`, `select-all-button`, `clear-all-button`, `checkbox-selection-status` |
 | Radio option | `radio-paypal` / `radio-credit-card` / `radio-debit-card` / `radio-bank-transfer` |

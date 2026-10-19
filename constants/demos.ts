@@ -34,11 +34,11 @@ export const DEMOS: Demo[] = [
     route: '/demos/external-browser',
   },
   {
-    id: 'button-tap',
-    title: 'Button Tap',
-    description: 'Validate button click functionality',
+    id: 'gestures',
+    title: 'Gestures',
+    description: 'Tap, long press, double tap, and hover, one tab each',
     icon: 'hand-left-outline',
-    route: '/demos/button-tap',
+    route: '/demos/gestures',
   },
   {
     id: 'camera-validation',
