@@ -37,7 +37,7 @@ testRigor Playground is a mobile application designed to provide interactive dem
 | 🔗 **External Browser**     | Open device browser for native vs browser context tests  |
 | 🖱️ **Button Tap**           | Validate button click functionality                      |
 | 📷 **Camera Validation**    | Test camera functionality and photo capture              |
-| ☑️ **Checkbox Interaction** | Validate checkbox selection and interaction              |
+| ☑️ **Selection Controls**   | Checkboxes, radio buttons, dropdowns, and advanced dropdowns in tabs |
 | 🔊 **Audio Validation**     | Test audio playback functionality                        |
 | 🗑️ **Delete Elements**      | Add and delete elements from a list                      |
 | 📅 **Date Picker**          | Choose dates and validate picker functionality           |

@@ -816,6 +816,96 @@ check that page contains "Login Successful"
 - To add a scenario, append to `LOGIN_SCENARIOS`; no route registration is
   needed beyond the existing `demos/login-scenarios/[scenario]` screen.
 
+## Example: Selection Controls Demo
+
+`app/demos/selection-controls.tsx` groups the single- and multi-choice controls
+behind one home card, with one tab per web playground page it absorbs. Each tab
+is a component in `components/selection-controls/`; only the active one is
+mounted, so switching tabs resets it. Open a tab directly with the `tab` query
+param, e.g. `trplayground://demos/selection-controls?tab=dropdowns`.
+
+| Tab | Ports | Component |
+|---|---|---|
+| Checkbox (default) | the former standalone Checkbox Interaction demo | `checkbox-section.tsx` |
+| Radio | [`/radioButtons`](https://tr-playground.netlify.app/radioButtons) | `radio-section.tsx` |
+| Dropdowns | [`/dropdowns`](https://tr-playground.netlify.app/dropdowns) | `dropdowns-section.tsx` |
+| Advanced | [`/advancedDropdowns`](https://tr-playground.netlify.app/advancedDropdowns) | `advanced-dropdowns-section.tsx` + `custom-select.tsx` |
+
+**Checkbox** keeps the old demo's copy and testIDs unchanged; only the way in
+changed (`Selection Controls` card, then the `Checkbox` tab).
+
+**Radio**: heading `Select a payment method`, options `PayPal`, `Credit card`,
+`Debit card`, `Bank transfer`. `Next` locks the radios and turns into a
+disabled `Paying with <method>`; `Cancel` unlocks them and keeps the choice.
+
+**Dropdowns**: `Simple dropdown` (`Dropdown button` → `Action`, `Another action`,
+`Something else here`), `Split dropdown` (`Split dropdown button` + a toggle
+that also offers `Separated link`), `Simple select` (OS picker, `Open this select
+menu` → `One`/`Two`/`Three`), `Single list select` and `Multiple list select`
+(`One`..`Four`). The `Selected options` panel reads e.g.
+`• Multiple list select: One, Four`, listed in option order.
+
+**Advanced**: four JS-drawn dropdowns that open inline, each followed by
+`Value selected: <value>`:
+
+| Label | Placeholder | Options | Behaviour |
+|---|---|---|---|
+| Searchable Select | `Select an option` | Apple, Banana, Cherry, Grape | `Search...` field filters; `No results` when empty |
+| Clearable Select | `Select a color` | Red, Green, Blue, Yellow | × button (`Clear Clearable Select`) empties it |
+| Animated Dropdown | `Choose something...` | Option 1..4 | 150 ms fade/slide in and out |
+| Delayed Dropdown | `Select an option` | Option 1..4 | `Loading...` for 2 s before the options appear |
+
+### Predictable content and testIDs
+
+| Element | `testID` |
+|---|---|
+| Tab | `selection-tab-checkbox` / `-radio` / `-dropdowns` / `-advanced` |
+| Header description (changes per tab) | `selection-controls-description` |
+| Checkbox tab | unchanged: `checkbox-option1`..`4`, `select-all-button`, `clear-all-button`, `checkbox-selection-status` |
+| Radio option | `radio-paypal` / `radio-credit-card` / `radio-debit-card` / `radio-bank-transfer` |
+| `Next` / `Paying with <method>` / `Cancel` | `radio-next-button` / `radio-paying-with` / `radio-cancel-button` |
+| Simple dropdown button / its items | `simple-dropdown-button` / `simple-dropdown-item-1`..`3` |
+| Split main half / toggle / items | `split-dropdown-button` / `split-dropdown-toggle` / `split-dropdown-item-1`..`4` |
+| Simple select | `simple-select-picker` |
+| List options | `single-list-option-1`..`4` / `multiple-list-option-1`..`4` |
+| Selected options lines | `selected-simple-dropdown`, `selected-split-dropdown`, `selected-simple-select`, `selected-single-list`, `selected-multiple-list` |
+| Advanced dropdown parts | `<id>-trigger`, `<id>-search`, `<id>-clear`, `<id>-loading`, `<id>-option-1`..`4`, `<id>-value` with `<id>` = `searchable-select`, `clearable-select`, `animated-dropdown`, `delayed-dropdown` |
+
+### Sample testRigor flow
+
+```
+click "Selection Controls"
+click "Radio"
+click "Credit card"
+click "Next"
+check that page contains "Paying with Credit card"
+click "Advanced"
+click "Delayed Dropdown"
+wait until page contains "Option 2"
+click "Option 2"
+check that page contains "Value selected: Option 2"
+```
+
+### Implementation notes
+
+- Deliberate divergences from the web:
+  - Radio `Next` stays disabled until a method is picked (the web runs it with
+    nothing selected and shows `Paying with `).
+  - Dropdowns description says the selected options are shown `below`, not `on
+    the right`; the multiple list hint says to tap instead of holding ctrl.
+  - Advanced dropdowns are named for their behaviour, not for the web libraries
+    they imitate (Angular Material, Select2, ng-select...), which have no native
+    counterpart. Animated and Delayed keep their web names, placeholders and
+    shared `Option 1..4` items — two menus with identical items is a locator test.
+  - The search field is not auto-focused: the keyboard would cover the options.
+- Menus open inline and push the content down instead of floating, so every
+  option is a real on-screen element.
+- Options expose `accessibilityRole="menuitem"` with `selected` in
+  `accessibilityState`; triggers expose `expanded`, radios `checked`/`disabled`.
+- `Animated.View` carries only the animation style; layout classes sit on an
+  inner `View`, since NativeWind classes are not guaranteed on Animated
+  components.
+
 ## Additional Resources
 
 - [Expo Router Documentation](https://docs.expo.dev/router/introduction/)

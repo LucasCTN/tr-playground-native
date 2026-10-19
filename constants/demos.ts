@@ -48,11 +48,11 @@ export const DEMOS: Demo[] = [
     route: '/demos/camera-validation',
   },
   {
-    id: 'checkbox-interaction',
-    title: 'Checkbox Interaction',
-    description: 'Validate checkbox selection and interaction functionality',
+    id: 'selection-controls',
+    title: 'Selection Controls',
+    description: 'Checkboxes, radio buttons, and dropdowns, one tab each',
     icon: 'checkbox-outline',
-    route: '/demos/checkbox-interaction',
+    route: '/demos/selection-controls',
   },
   {
     id: 'audio-validation',
