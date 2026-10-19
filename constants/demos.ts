@@ -34,11 +34,11 @@ export const DEMOS: Demo[] = [
     route: '/demos/external-browser',
   },
   {
-    id: 'button-tap',
-    title: 'Button Tap',
-    description: 'Validate button click functionality',
+    id: 'gestures',
+    title: 'Gestures',
+    description: 'Tap, long press, double tap, and hover, one tab each',
     icon: 'hand-left-outline',
-    route: '/demos/button-tap',
+    route: '/demos/gestures',
   },
   {
     id: 'camera-validation',
@@ -48,11 +48,11 @@ export const DEMOS: Demo[] = [
     route: '/demos/camera-validation',
   },
   {
-    id: 'checkbox-interaction',
-    title: 'Checkbox Interaction',
-    description: 'Validate checkbox selection and interaction functionality',
+    id: 'selection-controls',
+    title: 'Selection Controls',
+    description: 'Checkboxes, radio buttons, and dropdowns, one tab each',
     icon: 'checkbox-outline',
-    route: '/demos/checkbox-interaction',
+    route: '/demos/selection-controls',
   },
   {
     id: 'audio-validation',

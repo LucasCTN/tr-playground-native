@@ -35,9 +35,9 @@ testRigor Playground is a mobile application designed to provide interactive dem
 | 🌐 **WebView**              | Embedded browser inside the app                          |
 | 📍 **Geo Location**         | Request location and validate coordinates                |
 | 🔗 **External Browser**     | Open device browser for native vs browser context tests  |
-| 🖱️ **Button Tap**           | Validate button click functionality                      |
+| 🖱️ **Gestures**             | Tap, long press, double tap, and hover in tabs           |
 | 📷 **Camera Validation**    | Test camera functionality and photo capture              |
-| ☑️ **Checkbox Interaction** | Validate checkbox selection and interaction              |
+| ☑️ **Selection Controls**   | Checkboxes, radio buttons, dropdowns, and advanced dropdowns in tabs |
 | 🔊 **Audio Validation**     | Test audio playback functionality                        |
 | 🗑️ **Delete Elements**      | Add and delete elements from a list                      |
 | 📅 **Date Picker**          | Choose dates and validate picker functionality           |
@@ -152,8 +152,8 @@ tr-playground-native/
 │   ├── _layout.tsx         # Root layout with navigation
 │   ├── index.tsx           # Home screen
 │   └── demos/              # Demo screens
-│       ├── button-tap.tsx
 │       ├── camera-validation.tsx
+│       ├── gestures.tsx
 │       ├── shopping-cart.tsx
 │       └── ...
 ├── assets/                 # Static assets
@@ -162,6 +162,9 @@ tr-playground-native/
 │   └── images/             # Images and icons
 ├── components/             # Reusable components
 │   ├── demo-card.tsx
+│   ├── tabbed-demo.tsx     # Header + tab bar for grouped demos
+│   ├── gestures/           # One component per Gestures tab
+│   ├── selection-controls/ # One component per Selection Controls tab
 │   ├── themed-text.tsx
 │   ├── themed-view.tsx
 │   └── ui/

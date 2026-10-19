@@ -816,6 +816,199 @@ check that page contains "Login Successful"
 - To add a scenario, append to `LOGIN_SCENARIOS`; no route registration is
   needed beyond the existing `demos/login-scenarios/[scenario]` screen.
 
+## Grouped demos with tabs
+
+When several web playground pages exercise the same kind of interaction, they
+share one home card instead of one card each. `components/tabbed-demo.tsx`
+renders the header card and a tab bar; the screen file only lists its tabs:
+
+```tsx
+const TABS: readonly DemoTab[] = [
+  { key: 'tap', label: 'Tap', icon: 'hand-left-outline',
+    description: 'Validate button click functionality', Section: TapSection },
+  // ...
+];
+
+export default function GesturesScreen() {
+  return <TabbedDemo id="gestures" title="Gestures" tabs={TABS} />;
+}
+```
+
+- testIDs: `<id>-tab-<key>` for each tab, `<id>-description` for the header text,
+  which changes with the active tab.
+- `?tab=<key>` opens a tab directly, e.g.
+  `trplayground://demos/gestures?tab=long-press`.
+- Only the active section is mounted, so switching tabs resets its state.
+- Keep each section to one screen where possible; that is the point of tabs
+  over one long scroll.
+- When a group absorbs an existing standalone demo, move it into a section
+  with its copy and testIDs unchanged and remove its card from `DEMOS`.
+
+## Example: Gestures Demo
+
+`app/demos/gestures.tsx` maps the web playground's mouse interactions to their
+touch equivalents. Sections live in `components/gestures/`.
+
+| Tab | Ports | Touch mapping |
+|---|---|---|
+| Tap (default) | the former standalone Button Tap demo | unchanged |
+| Long Press | [`/longClick`](https://tr-playground.netlify.app/longClick) | press and hold |
+| Double Tap | [`/rightClick`](https://tr-playground.netlify.app/rightClick) | a phone has no right button; double tap is its secondary gesture |
+| Hover | [`/mouseHover`](https://tr-playground.netlify.app/mouseHover) | real hover (mouse, stylus, tablet trackpad) or a touch |
+
+**Tap** keeps the old demo's copy and testIDs (`tap-button`,
+`tap-success-message`); only the way in changed.
+
+**Long Press** copy matches the web, "click" wording included. Pick the
+threshold in `Select long click duration (seconds):` (1–10, default 1), then
+hold one of three `Click here` buttons; while held it reads
+`Keep holding... 1.23s`. The status under `Click time:` reads
+`Press and hold a button for at least 2 seconds.`, then
+`Button 2: long click! You held for 3.02s.` or
+`Button 1: quick press. You held for 0.12s.`
+
+**Double Tap**: `Double tap here` becomes `The button was double tapped` (and
+turns grey) on two taps within 300 ms. A lone tap shows
+`That was a single tap. Tap twice quickly.` once the 300 ms window closes.
+
+**Hover**: three `Hover here` buttons; `Hidden text:` shows
+`Button 3: This text is now visible!`, otherwise
+`Hover over a button to reveal the text.`
+
+### Predictable content and testIDs
+
+| Element | `testID` |
+|---|---|
+| Tab | `gestures-tab-tap` / `-long-press` / `-double-tap` / `-hover` |
+| Long press threshold / buttons / status | `long-press-duration-picker` / `long-press-button-1`..`3` / `long-press-status` |
+| Double tap button / single-tap hint | `double-tap-button` / `double-tap-single-hint` |
+| Hover buttons / status | `hover-button-1`..`3` / `hover-status` |
+
+### Sample testRigor flow
+
+```
+click "Gestures"
+click "Long Press"
+select "2" from "Select long click duration"
+long press "Click here"
+check that page contains "long click!"
+click "Double Tap"
+double click "Double tap here"
+check that page contains "The button was double tapped"
+```
+
+### Implementation notes
+
+- Deliberate divergences from the web:
+  - Right click becomes double tap, with its own copy (`Double tap here`,
+    `The button was double tapped`).
+  - A finger cannot hover: a touch screen only senses it on contact. Hover
+    exists only for pointers tracked before contact — a stylus sensed above the
+    screen (S Pen, Apple Pencil on recent iPads) or a mouse/trackpad (Android
+    with a mouse, iPad pointer, DeX, ChromeOS). Those hide the text on
+    hover-out, as on the web. A touch reveals it and leaves it shown, the way
+    mobile browsers keep `:hover` after a tap; otherwise the text would vanish
+    before a test could read it. Only the touch path is verified — Maestro
+    cannot generate hover events.
+  - The Hold Key Click page (click while holding Ctrl/Command) has no tab: a phone
+    has no modifier keys, and the closest analogue — holding one finger down
+    while tapping with another — cannot be driven by Maestro or `adb`, so it
+    could not be verified.
+- Long press uses `onPressIn`/`onPressOut` rather than `onLongPress`, so the
+  threshold is the picker's value and not the OS long-press timeout. Sliding the
+  finger off the button ends the press, like the web's `mouseleave`.
+- Double tap is timed in JS on `onPress`, not with a gesture-handler
+  recognizer, so the app needs no `GestureHandlerRootView`.
+
+## Example: Selection Controls Demo
+
+`app/demos/selection-controls.tsx` groups the single- and multi-choice controls
+behind one home card, with one tab per web playground page it absorbs. Each tab
+is a component in `components/selection-controls/`, rendered through the shared
+`TabbedDemo` (see [Grouped demos with tabs](#grouped-demos-with-tabs)).
+
+| Tab | Ports | Component |
+|---|---|---|
+| Checkbox (default) | the former standalone Checkbox Interaction demo | `checkbox-section.tsx` |
+| Radio | [`/radioButtons`](https://tr-playground.netlify.app/radioButtons) | `radio-section.tsx` |
+| Dropdowns | [`/dropdowns`](https://tr-playground.netlify.app/dropdowns) | `dropdowns-section.tsx` |
+| Advanced | [`/advancedDropdowns`](https://tr-playground.netlify.app/advancedDropdowns) | `advanced-dropdowns-section.tsx` + `custom-select.tsx` |
+
+**Checkbox** keeps the old demo's copy and testIDs unchanged; only the way in
+changed (`Selection Controls` card, then the `Checkbox` tab).
+
+**Radio**: heading `Select a payment method`, options `PayPal`, `Credit card`,
+`Debit card`, `Bank transfer`. `Next` locks the radios and turns into a
+disabled `Paying with <method>`; `Cancel` unlocks them and keeps the choice.
+
+**Dropdowns**: `Simple dropdown` (`Dropdown button` → `Action`, `Another action`,
+`Something else here`), `Split dropdown` (`Split dropdown button` + a toggle
+that also offers `Separated link`), `Simple select` (OS picker, `Open this select
+menu` → `One`/`Two`/`Three`), `Single list select` and `Multiple list select`
+(`One`..`Four`). The `Selected options` panel reads e.g.
+`• Multiple list select: One, Four`, listed in option order.
+
+**Advanced**: four JS-drawn dropdowns that open inline, each followed by
+`Value selected: <value>`:
+
+| Label | Placeholder | Options | Behaviour |
+|---|---|---|---|
+| Searchable Select | `Select an option` | Apple, Banana, Cherry, Grape | `Search...` field filters; `No results` when empty |
+| Clearable Select | `Select a color` | Red, Green, Blue, Yellow | × button (`Clear Clearable Select`) empties it |
+| Animated Dropdown | `Choose something...` | Option 1..4 | 150 ms fade/slide in and out |
+| Delayed Dropdown | `Select an option` | Option 1..4 | `Loading...` for 2 s before the options appear |
+
+### Predictable content and testIDs
+
+| Element | `testID` |
+|---|---|
+| Tab | `selection-controls-tab-checkbox` / `-radio` / `-dropdowns` / `-advanced` |
+| Header description (changes per tab) | `selection-controls-description` |
+| Checkbox tab | unchanged: `checkbox-option1`..`4`, `select-all-button`, `clear-all-button`, `checkbox-selection-status` |
+| Radio option | `radio-paypal` / `radio-credit-card` / `radio-debit-card` / `radio-bank-transfer` |
+| `Next` / `Paying with <method>` / `Cancel` | `radio-next-button` / `radio-paying-with` / `radio-cancel-button` |
+| Simple dropdown button / its items | `simple-dropdown-button` / `simple-dropdown-item-1`..`3` |
+| Split main half / toggle / items | `split-dropdown-button` / `split-dropdown-toggle` / `split-dropdown-item-1`..`4` |
+| Simple select | `simple-select-picker` |
+| List options | `single-list-option-1`..`4` / `multiple-list-option-1`..`4` |
+| Selected options lines | `selected-simple-dropdown`, `selected-split-dropdown`, `selected-simple-select`, `selected-single-list`, `selected-multiple-list` |
+| Advanced dropdown parts | `<id>-trigger`, `<id>-search`, `<id>-clear`, `<id>-loading`, `<id>-option-1`..`4`, `<id>-value` with `<id>` = `searchable-select`, `clearable-select`, `animated-dropdown`, `delayed-dropdown` |
+
+### Sample testRigor flow
+
+```
+click "Selection Controls"
+click "Radio"
+click "Credit card"
+click "Next"
+check that page contains "Paying with Credit card"
+click "Advanced"
+click "Delayed Dropdown"
+wait until page contains "Option 2"
+click "Option 2"
+check that page contains "Value selected: Option 2"
+```
+
+### Implementation notes
+
+- Deliberate divergences from the web:
+  - Radio `Next` stays disabled until a method is picked (the web runs it with
+    nothing selected and shows `Paying with `).
+  - Dropdowns description says the selected options are shown `below`, not `on
+    the right`; the multiple list hint says to tap instead of holding ctrl.
+  - Advanced dropdowns are named for their behaviour, not for the web libraries
+    they imitate (Angular Material, Select2, ng-select...), which have no native
+    counterpart. Animated and Delayed keep their web names, placeholders and
+    shared `Option 1..4` items — two menus with identical items is a locator test.
+  - The search field is not auto-focused: the keyboard would cover the options.
+- Menus open inline and push the content down instead of floating, so every
+  option is a real on-screen element.
+- Options expose `accessibilityRole="menuitem"` with `selected` in
+  `accessibilityState`; triggers expose `expanded`, radios `checked`/`disabled`.
+- `Animated.View` carries only the animation style; layout classes sit on an
+  inner `View`, since NativeWind classes are not guaranteed on Animated
+  components.
+
 ## Additional Resources
 
 - [Expo Router Documentation](https://docs.expo.dev/router/introduction/)
