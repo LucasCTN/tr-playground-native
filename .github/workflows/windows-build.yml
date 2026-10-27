@@ -1,0 +1,61 @@
+name: testRigor Windows
+
+# Runs exclusively on manual trigger (workflow_dispatch) to compile the 
+# React Native Windows app natively and run the testRigor Windows suite.
+#
+# Required repository secrets:
+#   TESTRIGOR_API_KEY         - testRigor personal auth token
+#   TR_WINDOWS_SUITE_TOKEN    - CI token of the Windows suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      labels:
+        description: "testRigor labels to run (empty = whole suite)"
+        required: false
+        default: ""
+
+env:
+  TR_WINDOWS_SUITE_ID: ${{ vars.TR_WINDOWS_SUITE_ID || 'YOUR_WINDOWS_SUITE_ID_HERE' }}
+  TR_LABELS: ${{ github.event.inputs.labels || '' }}
+
+jobs:
+  windows:
+    name: Windows suite
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install testRigor CLI
+        run: npm install -g @testrigor/testrigor-cli
+
+      - name: Resolve the artifact name (PowerShell)
+        shell: pwsh
+        run: |
+          $version = (Get-Content app.json | ConvertFrom-Json).expo.version
+          echo "TR_ARTIFACT=tr-playground-mobile-$version-windows.zip" >> $env:GITHUB_ENV
+          echo "Artifact: tr-playground-mobile-$version-windows.zip"
+
+      - name: Build and Compile Windows App
+        shell: pwsh
+        run: |
+          npx react-native run-windows --arch x64 --release --no-launch
+
+      - name: Package Windows Build for testRigor
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "windows/AppPackages/*" -DestinationPath "$env:TR_ARTIFACT" -Force
+          Get-Item "$env:TR_ARTIFACT"
+
+      - name: Generate the version test data
+        env:
+          TR_PLATFORM: windows
+        run: node scripts/testrigor-vars.js testrigor-vars.json
