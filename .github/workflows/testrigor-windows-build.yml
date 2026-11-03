@@ -46,6 +46,10 @@ jobs:
           $version = (Get-Content app.json | ConvertFrom-Json).expo.version
           echo "TR_ARTIFACT=tr-playground-mobile-$version-windows.zip" >> $env:GITHUB_ENV
           echo "Artifact: tr-playground-mobile-$version-windows.zip"
+      
+      - name: Restore NuGet Packages
+        shell: pwsh
+        run: nuget restore windows/TrPlayground.sln
 
       - name: Build and Compile Windows App
         shell: pwsh
