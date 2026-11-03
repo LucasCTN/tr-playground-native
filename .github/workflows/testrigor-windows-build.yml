@@ -35,7 +35,7 @@ jobs:
         run: npm install
 
       - name: Initialize React Native Windows
-        run: npx react-native-windows-init --overwrite --yes --version 0.81.38
+        run: npx react-native-windows-init --overwrite --version 0.81.38
 
       - name: Install testRigor CLI
         run: npm install -g @testrigor/testrigor-cli
