@@ -49,7 +49,7 @@ jobs:
       
       - name: Restore NuGet Packages
         shell: pwsh
-        run: nuget restore windows/TrPlayground.sln
+        run: dotnet restore windows/TrPlayground.sln
 
       - name: Build and Compile Windows App
         shell: pwsh
