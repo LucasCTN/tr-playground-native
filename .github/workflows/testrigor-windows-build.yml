@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
       # 1. Generate the Windows native project on the fly since you develop on Linux
       - name: Initialize React Native Windows
         shell: pwsh
