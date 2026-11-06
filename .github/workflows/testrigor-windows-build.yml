@@ -34,35 +34,58 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # 1. Generate the Windows native project on the fly since you develop on Linux
       - name: Initialize React Native Windows
-        run: npx react-native init-windows --overwrite
+        shell: pwsh
+        run: npx react-native init-windows --overwrite --no-telemetry
 
-      - name: Install testRigor CLI
-        run: npm install -g @testrigor/testrigor-cli
-
+      # 2. Resolve the artifact version from app.json
       - name: Resolve the artifact name (PowerShell)
         shell: pwsh
         run: |
           $version = (Get-Content app.json | ConvertFrom-Json).expo.version
           echo "TR_ARTIFACT=tr-playground-mobile-$version-windows.zip" >> $env:GITHUB_ENV
           echo "Artifact: tr-playground-mobile-$version-windows.zip"
-      
+
+      # 3. Explicitly restore NuGet packages via MSBuild to fix the WindowsAppSDK transitive error
       - name: Restore NuGet Packages
         shell: pwsh
-        run: dotnet restore windows/TrPlayground.sln
+        run: msbuild windows/TrPlayground.sln -t:Restore /p:Configuration=Release /p:Platform=x64
 
-      - name: Build and Compile Windows App
+      # 4. Compile the application directly using MSBuild (bypassing the broken CLI wrapper)
+      - name: Build Windows App (Release x64)
         shell: pwsh
         run: |
-          npx react-native run-windows --arch x64 --release --no-launch
+          msbuild windows/TrPlayground.sln /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false
 
+      # 5. Package the build output into a zip for testRigor
       - name: Package Windows Build for testRigor
         shell: pwsh
         run: |
-          Compress-Archive -Path "windows/AppPackages/*" -DestinationPath "$env:TR_ARTIFACT" -Force
+          Compress-Archive -Path "windows/TrApp/AppPackages/*" -DestinationPath "$env:TR_ARTIFACT" -Force
           Get-Item "$env:TR_ARTIFACT"
 
       - name: Generate the version test data
         env:
           TR_PLATFORM: windows
         run: node scripts/testrigor-vars.js testrigor-vars.json
+
+      # 6. Execute testRigor Windows Suite
+      # - name: Run the testRigor Windows suite
+      #   env:
+      #     TESTRIGOR_API_KEY: ${{ secrets.TESTRIGOR_API_KEY }}
+      #   run: |
+      #     testrigor test-suite run "${{ vars.TR_WINDOWS_SUITE_ID || 'YOUR_WINDOWS_SUITE_ID_HERE' }}" \
+      #       --token "${{ secrets.TR_WINDOWS_SUITE_TOKEN }}" \
+      #       --file-path "$env:TR_ARTIFACT" \
+      #       --variables-path testrigor-vars.json \
+      #       ${{ env.TR_LABELS != '' && format('--labels "{0}"', env.TR_LABELS) || '' }} \
+      #       --junit-report-save-path testrigor-windows.xml
+
+      # - name: Upload the JUnit report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: testrigor-windows
+      #     path: testrigor-windows.xml
+      #     if-no-files-found: warn
