@@ -53,13 +53,13 @@ jobs:
       # 3. Explicitly restore NuGet packages via MSBuild to fix the WindowsAppSDK transitive error
       - name: Restore NuGet Packages
         shell: pwsh
-        run: msbuild windows/TrPlayground.sln -t:Restore /p:Configuration=Release /p:Platform=x64
+        run: msbuild windows/TrPlayground.sln -t:Restore /p:Configuration=Release /p:Platform=x64 /p:WindowsTargetPlatformVersion=10.0
 
       # 4. Compile the application directly using MSBuild (bypassing the broken CLI wrapper)
       - name: Build Windows App (Release x64)
         shell: pwsh
         run: |
-          msbuild windows/TrPlayground.sln /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false
+          msbuild windows/TrPlayground.sln /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false /p:WindowsTargetPlatformVersion=10.0
 
       # 5. Package the build output into a zip for testRigor
       - name: Package Windows Build for testRigor
