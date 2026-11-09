@@ -42,6 +42,9 @@ jobs:
         shell: pwsh
         run: npx react-native init-windows --overwrite --no-telemetry
 
+      - name: Install dependencies
+        run: npm install
+
       # 2. Resolve the artifact version from app.json
       - name: Resolve the artifact name (PowerShell)
         shell: pwsh
