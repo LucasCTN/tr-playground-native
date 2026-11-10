@@ -44,6 +44,10 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Auto-link Windows modules
+        shell: pwsh
+        run: npx @react-native-community/cli autolink-windows --sln "windows\TrPlayground.sln" --proj "windows\TrPlayground\TrPlayground.vcxproj"
       
       - name: Prepare Windows entry point
         shell: pwsh
