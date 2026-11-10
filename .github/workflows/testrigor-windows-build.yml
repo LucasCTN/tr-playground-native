@@ -44,6 +44,13 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+      
+      - name: Prepare Windows entry point
+        shell: pwsh
+        run: |
+          @"
+          import 'expo-router/entry';
+          "@ | Set-Content -Path index.js -Encoding utf8
 
       # 2. Resolve the artifact version from app.json
       - name: Resolve the artifact name (PowerShell)
