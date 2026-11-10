@@ -73,7 +73,7 @@ jobs:
       - name: Build Windows App (Release x64)
         shell: pwsh
         run: |
-          msbuild windows/TrPlayground.sln /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false /p:WindowsTargetPlatformVersion=10.0
+          msbuild windows/TrPlayground.sln /p:Configuration=Release /p:Platform=x64 /p:AppxPackageSigningEnabled=false /p:WindowsTargetPlatformVersion=10.0 /p:WindowsAppSDKVerifyTransitiveDependencies=false
 
       # 5. Package the build output into a zip for testRigor
       - name: Package Windows Build for testRigor
