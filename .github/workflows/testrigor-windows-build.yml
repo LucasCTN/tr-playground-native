@@ -40,7 +40,7 @@ jobs:
       # 1. Generate the Windows native project on the fly since you develop on Linux
       - name: Initialize React Native Windows
         shell: pwsh
-        run: npx react-native init-windows --overwrite --no-telemetry
+        run: npx react-native init-windows --overwrite --no-telemetry --use-winui3
 
       - name: Install dependencies
         run: npm install
